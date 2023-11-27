@@ -75,7 +75,7 @@ class CdkGlueBlogStack(core.Stack):
         # Creating Glue Python job for workflow Start event
         emit_start_glue_job_name = config["glueJobConfig"]["emitStartGlueJobName"]
         emit_start_script_name = config["glueJobConfig"]["emitStartScriptName"]
-        emit_start_script_path = glue_script_base_path + "/" + emit_start_script_name
+        emit_start_script_path = f"{glue_script_base_path}/{emit_start_script_name}"
         emit_start_arguments = {
             '--job-bookmark-option': 'job-bookmark-disable',
             '--job-language': "python",
@@ -95,12 +95,14 @@ class CdkGlueBlogStack(core.Stack):
 
         # S3 path for the Glue output
         glue_output_path = "s3://" + config["dataSourcePath"]["s3BucketNameNeherlabDenorm"] + "-" + str(self.account)\
-                           + "-" + config["awsAccount"]["awsRegion"]
+                               + "-" + config["awsAccount"]["awsRegion"]
 
         # Creating Glue ETL job for Neherlab data denomalization
         neherlab_denorm_glue_job_name = config["glueJobConfig"]["neherlabDenormGlueJobName"]
         neherlab_denorm_script_name = config["glueJobConfig"]["neherlabDenormGlueELTScriptName"]
-        neherlab_denorm_script_path = glue_script_base_path + "/" + neherlab_denorm_script_name
+        neherlab_denorm_script_path = (
+            f"{glue_script_base_path}/{neherlab_denorm_script_name}"
+        )
         neherlab_denorm_arguments = {
             '--DATABASENAME': config["glueJobConfig"]["databaseName"],
             '--NHRLAB_CNTRY_CD_TBL': config["glueJobConfig"]["neherlabCntryCdTableName"],
@@ -130,7 +132,7 @@ class CdkGlueBlogStack(core.Stack):
         # Creating Glue Python job for End of the workflow event
         emit_end_glue_job_name = config["glueJobConfig"]["emitEndGlueJobName"]
         emit_end_script_name = config["glueJobConfig"]["emitStartScriptName"]
-        emit_end_script_path = glue_script_base_path + "/" + emit_end_script_name
+        emit_end_script_path = f"{glue_script_base_path}/{emit_end_script_name}"
         emit_end_arguments = {
             '--job-bookmark-option': 'job-bookmark-disable',
             '--job-language': "python",
@@ -382,20 +384,21 @@ class CdkGlueBlogStack(core.Stack):
         """
         Creates AWS Cloud IAM Role/Policy
         """
-        roles = {}
-        roles['glue_role'] = iam.Role(
-            self,
-            config["iam"]["glueRoleName"],
-            assumed_by=iam.ServicePrincipal('glue.amazonaws.com'),
-            role_name=config["iam"]["glueRoleName"],
-            managed_policies=[
-                iam.ManagedPolicy.from_managed_policy_arn(
-                    self,
-                    'glue-glue-policy',
-                    'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
-                )
-            ]
-        )
+        roles = {
+            'glue_role': iam.Role(
+                self,
+                config["iam"]["glueRoleName"],
+                assumed_by=iam.ServicePrincipal('glue.amazonaws.com'),
+                role_name=config["iam"]["glueRoleName"],
+                managed_policies=[
+                    iam.ManagedPolicy.from_managed_policy_arn(
+                        self,
+                        'glue-glue-policy',
+                        'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+                    )
+                ],
+            )
+        }
         # Adding inline policy to GLue role to access the KMS key
         roles['glue_role'].add_to_policy(
             iam.PolicyStatement(
@@ -515,12 +518,11 @@ class CdkGlueBlogStack(core.Stack):
         """
         Creates AWS Glue Database
         """
-        raw_database = glue.Database(
+        return glue.Database(
             self,
             config["glueJobConfig"]["databaseName"],
             database_name=config["glueJobConfig"]["databaseName"],
         )
-        return raw_database
 
     def create_glue_crawlers(self, glue_role, glue_security_configuration, raw_database, s3_target_path,
                              crawler_name):
@@ -561,7 +563,7 @@ class CdkGlueBlogStack(core.Stack):
             glue_version = '3.0'
 
             # Adding Spark Glue Job
-            glue_job = glue.CfnJob(
+            return glue.CfnJob(
                 self,
                 glue_job_name,
                 name=glue_job_name,
@@ -573,15 +575,14 @@ class CdkGlueBlogStack(core.Stack):
                 security_configuration=glue_security_configuration.security_configuration_name,
                 default_arguments=arguments,
                 command=glue.CfnJob.JobCommandProperty(
-                    name=job_type,
-                    script_location=script_path
-                )
+                    name=job_type, script_location=script_path
+                ),
             )
 
         else:
             glue_version = '2.0'
             # Adding Python Glue Job
-            glue_job = glue.CfnJob(
+            return glue.CfnJob(
                 self,
                 glue_job_name,
                 name=glue_job_name,
@@ -594,11 +595,9 @@ class CdkGlueBlogStack(core.Stack):
                 command=glue.CfnJob.JobCommandProperty(
                     name=job_type,
                     script_location=script_path,
-                    python_version='3.9'
-                )
+                    python_version='3.9',
+                ),
             )
-
-        return glue_job
 
 
 class CdkGlueBlogStage(core.Stage):
