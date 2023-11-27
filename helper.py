@@ -38,4 +38,4 @@ def create_archive(zip_name='glue_blog'):
             os.path.join(tmpdir, 'glue_blog')
         )
 
-    return os.path.join('cdk.out/', zip_name+".zip")
+    return os.path.join('cdk.out/', f"{zip_name}.zip")

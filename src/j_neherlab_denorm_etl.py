@@ -20,15 +20,17 @@ class j_neherlab_denorm_etl:
         if '--JOB_NAME' in sys.argv:
             params.append('JOB_NAME')
 
-        # Mandatory fields
-        params.append('S3_OUTPUT_PATH')
-        params.append('DATABASENAME')
-        params.append('NHRLAB_CS_CNT_TBL')
-        params.append('NHRLAB_ICU_CAP_TBL')
-        params.append('NHRLAB_CNTRY_CD_TBL')
-        params.append('NHRLAB_PPL_TBL')
-        params.append('OUTPUT_TBL')
-
+        params.extend(
+            (
+                'S3_OUTPUT_PATH',
+                'DATABASENAME',
+                'NHRLAB_CS_CNT_TBL',
+                'NHRLAB_ICU_CAP_TBL',
+                'NHRLAB_CNTRY_CD_TBL',
+                'NHRLAB_PPL_TBL',
+                'OUTPUT_TBL',
+            )
+        )
         # Glue Context
         self.args = getResolvedOptions(sys.argv, params)
         self.context = GlueContext(SparkContext.getOrCreate())

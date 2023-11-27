@@ -9,11 +9,7 @@ from pipeline import PipelineCDKStack
 
 app = core.App()
 
-# Get target stage from cdk context
-config_file = app.node.try_get_context('config')
-
-# Load stage config and set cdk environment
-if config_file:
+if config_file := app.node.try_get_context('config'):
     configFilePath = config_file
 else:
     configFilePath = "./default-config.yaml"
